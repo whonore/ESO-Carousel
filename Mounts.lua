@@ -28,7 +28,6 @@ end
 
 function Carousel.Mounts:Init()
     self:LoadMounts(false)
-    SLASH_COMMANDS["/carousel"] = function(option) self:RunSlash(option) end
     if Carousel.options.mounts.enabled then
         self:RegisterNext()
     end
@@ -66,32 +65,6 @@ function Carousel.Mounts:Disable()
     Carousel.options.mounts.enabled = false
     EVENT_MANAGER:UnregisterForEvent(self.events.wait, EVENT_MOUNTED_STATE_CHANGED)
     EVENT_MANAGER:UnregisterForUpdate(self.events.next)
-end
-
-function Carousel.Mounts:RunSlash(option)
-    local function help()
-        d(Carousel.name .. " commands:")
-        d("/carousel mounts [toggle||enable||disable||reload]")
-    end
-    local options = {string.match(option, "^(%S*)%s*(.-)$")}
-
-    if not option or option == "" then
-        help()
-    elseif options[1] == "mounts" then
-        if options[2] == "toggle" then
-            if Carousel.options.mounts.enabled then self:Disable() else self:Enable() end
-        elseif options[2] == "enable" then
-            self:Enable()
-        elseif options[2] == "disable" then
-            self:Disable()
-        elseif options[2] == "reload" then
-            self:LoadMounts(true)
-        else
-            help()
-        end
-    else
-        help()
-    end
 end
 
 function Carousel.Mounts:RegisterNext()
