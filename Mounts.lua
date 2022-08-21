@@ -1,3 +1,4 @@
+local LAM = LibAddonMenu2
 local moduleName = "Mounts"
 local modulePrefix = Carousel.name .. moduleName
 
@@ -11,7 +12,6 @@ Carousel.Mounts = {
     optionsVersion = 1,
     optionsDefault = {
         enabled = true,
-        -- TODO: make configurable
         -- TODO: allow 0 for on every mount
         rate_s = 10 * 60 * 60, -- 10 minutes
     },
@@ -37,10 +37,47 @@ local function isMount(collectible)
 end
 
 function Carousel.Mounts:Init()
+    self:InitMenu()
+
     self:LoadMounts(false)
     if self.Enabled() then
         self:RegisterNext()
     end
+end
+
+function Carousel.Mounts:InitMenu()
+    local panelData = {
+        type = "panel",
+        name = self.displayName,
+        displayName = self.displayName,
+        author = Carousel.author,
+        version = Carousel.version,
+        registerForRefresh = true,
+        registerForDefaults = true,
+    }
+    local optionsData = {
+        [1] = {
+            type = "header",
+            name = self.displayName .. " Settings",
+            width = "full",
+        },
+        [2] = {
+            type = "description",
+            text = "Control how " .. Carousel.displayName .. " cycles mounts.",
+            width = "full",
+        },
+        [3] = {
+            type = "checkbox",
+            name = "Enable",
+            tooltip = "Enable/disable cycling mounts.",
+            width = "full",
+            getFunc = function() return self:Enabled() end,
+            setFunc = function(v) if v then self:Enable() else self:Disable() end end,
+        },
+    }
+
+    LAM:RegisterAddonPanel(self.name, panelData)
+    LAM:RegisterOptionControls(self.name, optionsData)
 end
 
 -- TODO: recompute if mounts change
@@ -65,7 +102,7 @@ function Carousel.Mounts:LoadMounts(reload)
 end
 
 function Carousel.Mounts:Enable()
-    dmsg("enabled")
+    dmsg("enabled (cycle every " .. self:CycleRate_ms() / 1000 .. " seconds)")
     Carousel.options.mounts.enabled = true
     self:RegisterNext()
 end

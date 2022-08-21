@@ -11,6 +11,7 @@
 ## Version: 0.1.0
 ## IsLibrary: false
 ## SavedVariables: Mounts
+## DependsOn: LibAddonMenu-2.0>=34
 
 Carousel.lua
 Mounts.lua
