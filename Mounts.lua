@@ -2,14 +2,14 @@ Carousel.Mounts = {}
 Carousel.Mounts.name = Carousel.name .. "Mounts"
 Carousel.Mounts.events = {
     next = Carousel.Mounts.name .. "Next",
-    wait = Carousel.Mounts.name .. "WaitDismount"
+    wait = Carousel.Mounts.name .. "WaitDismount",
 }
 Carousel.Mounts.optionsVersion = 1
 Carousel.Mounts.optionsDefault = {
     enabled = true,
     -- TODO: make configurable
     -- TODO: allow 0 for on every mount
-    rate_s = 10 * 60 * 60 -- 10 minutes
+    rate_s = 10 * 60 * 60, -- 10 minutes
 }
 
 local function isMountCategory(category)
@@ -85,7 +85,9 @@ function Carousel.Mounts:WaitForDismount()
         EVENT_MOUNTED_STATE_CHANGED,
         function(event, mounted)
             if not mounted then
-                EVENT_MANAGER:UnregisterForEvent(self.events.wait, EVENT_MOUNTED_STATE_CHANGED)
+                EVENT_MANAGER:UnregisterForEvent(
+                    self.events.wait,
+                    EVENT_MOUNTED_STATE_CHANGED)
                 self:RegisterNext()
                 self:Next()
             end
