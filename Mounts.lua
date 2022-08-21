@@ -75,6 +75,18 @@ function Carousel.Mounts:InitMenu()
             getFunc = function() return self:Enabled() end,
             setFunc = function(v) if v then self:Enable() else self:Disable() end end,
         },
+        [4] = {
+            type = "slider",
+            name = "Cycle rate (minutes)",
+            tooltip = "How quickly to cycle through mounts. Set to 0 to cycle on every mount.",
+            width = "full",
+            min = 0,
+            max = 24 * 60, -- 24 hours
+            step = 1,
+            default = self.optionsDefault.rate_s / 60,
+            getFunc = function() return self:CycleRate_ms() / (1000 * 60) end,
+            setFunc = function(v) return self:SetCycleRate_min(v) end,
+        },
     }
 
     LAM:RegisterAddonPanel(self.name, panelData)
