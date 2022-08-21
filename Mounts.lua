@@ -1,7 +1,8 @@
 Carousel.Mounts = {}
+Carousel.Mounts.name = Carousel.name .. "Mounts"
 Carousel.Mounts.events = {
-    next = Carousel.name .. "MountsNext",
-    wait = Carousel.name .. "MountsWaitDismount"
+    next = Carousel.Mounts.name .. "Next",
+    wait = Carousel.Mounts.name .. "WaitDismount"
 }
 Carousel.Mounts.optionsVersion = 1
 Carousel.Mounts.optionsDefault = {
