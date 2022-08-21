@@ -1,16 +1,32 @@
-Carousel.Mounts = {}
-Carousel.Mounts.name = Carousel.name .. "Mounts"
-Carousel.Mounts.events = {
-    next = Carousel.Mounts.name .. "Next",
-    wait = Carousel.Mounts.name .. "WaitDismount",
+local moduleName = "Mounts"
+local modulePrefix = Carousel.name .. moduleName
+
+Carousel.Mounts = {
+    name = modulePrefix,
+    displayName = Carousel.displayName .. " " .. moduleName,
+    events = {
+        next = modulePrefix .. "Next",
+        wait = modulePrefix .. "WaitDismount",
+    },
+    optionsVersion = 1,
+    optionsDefault = {
+        enabled = true,
+        -- TODO: make configurable
+        -- TODO: allow 0 for on every mount
+        rate_s = 10 * 60 * 60, -- 10 minutes
+    },
 }
-Carousel.Mounts.optionsVersion = 1
-Carousel.Mounts.optionsDefault = {
-    enabled = true,
-    -- TODO: make configurable
-    -- TODO: allow 0 for on every mount
-    rate_s = 10 * 60 * 60, -- 10 minutes
-}
+
+local function shuffle(x)
+    for i = #x, 2, -1 do
+        local j = math.random(i)
+        x[i], x[j] = x[j], x[i]
+    end
+end
+
+local function dmsg(msg)
+    d("[" .. modulePrefix .. "] " .. msg)
+end
 
 local function isMountCategory(category)
     return not (category:IsOutfitStylesCategory() or category:IsHousingCategory())
@@ -20,16 +36,9 @@ local function isMount(collectible)
     return collectible:IsCategoryType(COLLECTIBLE_CATEGORY_TYPE_MOUNT)
 end
 
-local function shuffle(x)
-    for i = #x, 2, -1 do
-        local j = math.random(i)
-        x[i], x[j] = x[j], x[i]
-    end
-end
-
 function Carousel.Mounts:Init()
     self:LoadMounts(false)
-    if Carousel.options.mounts.enabled then
+    if self.Enabled() then
         self:RegisterNext()
     end
 end
@@ -51,25 +60,29 @@ function Carousel.Mounts:LoadMounts(reload)
     shuffle(self.ids)
 
     if reload then
-        d(Carousel.name .. " Mounts reloaded")
+        dmsg("reloaded")
     end
 end
 
 function Carousel.Mounts:Enable()
-    d(Carousel.name .. " Mounts enabled")
+    dmsg("enabled")
     Carousel.options.mounts.enabled = true
     self:RegisterNext()
 end
 
 function Carousel.Mounts:Disable()
-    d(Carousel.name .. " Mounts disabled")
+    dmsg("disabled")
     Carousel.options.mounts.enabled = false
     EVENT_MANAGER:UnregisterForEvent(self.events.wait, EVENT_MOUNTED_STATE_CHANGED)
     EVENT_MANAGER:UnregisterForUpdate(self.events.next)
 end
 
+function Carousel.Mounts:Enabled()
+    return Carousel.options.mounts.enabled
+end
+
 function Carousel.Mounts:RegisterNext()
-    if not Carousel.options.mounts.enabled then return end
+    if not self.Enabled() then return end
 
     EVENT_MANAGER:UnregisterForUpdate(self.events.next)
     EVENT_MANAGER:RegisterForUpdate(
@@ -97,7 +110,7 @@ end
 -- TODO: allow filtering
 -- TODO: allow changing companion's mount
 function Carousel.Mounts:Next()
-    if not Carousel.options.mounts.enabled then return end
+    if not self.Enabled() then return end
 
     if IsMounted() then
         self:WaitForDismount()
@@ -106,7 +119,7 @@ function Carousel.Mounts:Next()
 
     local mountId = self.ids[self.next]
     local mount = ZO_COLLECTIBLE_DATA_MANAGER:GetCollectibleDataById(mountId)
-    d("Switching active mount to " .. mount:GetName())
+    dmsg("switching active mount to " .. mount:GetName())
     mount:Use()
 
     if self.next == #self.ids then

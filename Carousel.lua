@@ -1,6 +1,10 @@
-Carousel = {}
-Carousel.name = "Carousel"
-Carousel.options = {}
+Carousel = {
+    name = "Carousel",
+    displayName = "Carousel",
+    author = "Wolf Honore",
+    version = "0.1.0",
+    options = {},
+}
 
 local function init()
     Carousel.options.mounts = ZO_SavedVars:NewAccountWide(
