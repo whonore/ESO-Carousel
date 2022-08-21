@@ -13,7 +13,7 @@ Carousel.Mounts = {
     optionsDefault = {
         enabled = true,
         -- TODO: allow 0 for on every mount
-        rate_s = 10 * 60 * 60, -- 10 minutes
+        rate_s = 10 * 60, -- 10 minutes
     },
 }
 
@@ -71,6 +71,7 @@ function Carousel.Mounts:InitMenu()
             name = "Enable",
             tooltip = "Enable/disable cycling mounts.",
             width = "full",
+            default = self.optionsDefault.enabled,
             getFunc = function() return self:Enabled() end,
             setFunc = function(v) if v then self:Enable() else self:Disable() end end,
         },
@@ -118,13 +119,22 @@ function Carousel.Mounts:Enabled()
     return Carousel.options.mounts.enabled
 end
 
+function Carousel.Mounts:CycleRate_ms()
+    return Carousel.options.mounts.rate_s * 1000
+end
+
+function Carousel.Mounts:SetCycleRate_min(rate_min)
+    Carousel.options.mounts.rate_s = rate_min * 60
+    self:RegisterNext()
+end
+
 function Carousel.Mounts:RegisterNext()
     if not self.Enabled() then return end
 
     EVENT_MANAGER:UnregisterForUpdate(self.events.next)
     EVENT_MANAGER:RegisterForUpdate(
         self.events.next,
-        Carousel.options.mounts.rate_s * 1000,
+        self:CycleRate_ms(),
         function() self:Next() end)
 end
 
