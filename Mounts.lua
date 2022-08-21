@@ -12,7 +12,6 @@ Carousel.Mounts = {
     optionsVersion = 1,
     optionsDefault = {
         enabled = true,
-        -- TODO: allow 0 for on every mount
         rate_s = 10 * 60, -- 10 minutes
     },
 }
@@ -78,7 +77,7 @@ function Carousel.Mounts:InitMenu()
         [4] = {
             type = "slider",
             name = "Cycle rate (minutes)",
-            tooltip = "How quickly to cycle through mounts. Set to 0 to cycle on every mount.",
+            tooltip = "How quickly to cycle through mounts. Set to 0 to cycle on every dismount.",
             width = "full",
             min = 0,
             max = 24 * 60, -- 24 hours
@@ -123,8 +122,7 @@ end
 function Carousel.Mounts:Disable()
     dmsg("disabled")
     Carousel.options.mounts.enabled = false
-    EVENT_MANAGER:UnregisterForEvent(self.events.wait, EVENT_MOUNTED_STATE_CHANGED)
-    EVENT_MANAGER:UnregisterForUpdate(self.events.next)
+    self:Unregister()
 end
 
 function Carousel.Mounts:Enabled()
@@ -140,14 +138,23 @@ function Carousel.Mounts:SetCycleRate_min(rate_min)
     self:RegisterNext()
 end
 
+function Carousel.Mounts:Unregister()
+    EVENT_MANAGER:UnregisterForEvent(self.events.wait, EVENT_MOUNTED_STATE_CHANGED)
+    EVENT_MANAGER:UnregisterForUpdate(self.events.next)
+end
+
 function Carousel.Mounts:RegisterNext()
     if not self.Enabled() then return end
 
-    EVENT_MANAGER:UnregisterForUpdate(self.events.next)
-    EVENT_MANAGER:RegisterForUpdate(
-        self.events.next,
-        self:CycleRate_ms(),
-        function() self:Next() end)
+    self:Unregister()
+    if self:CycleRate_ms() > 0 then
+        EVENT_MANAGER:RegisterForUpdate(
+            self.events.next,
+            self:CycleRate_ms(),
+            function() self:Next() end)
+    else
+        self:WaitForDismount()
+    end
 end
 
 function Carousel.Mounts:WaitForDismount()
@@ -178,8 +185,18 @@ function Carousel.Mounts:Next()
 
     local mountId = self.ids[self.next]
     local mount = ZO_COLLECTIBLE_DATA_MANAGER:GetCollectibleDataById(mountId)
-    dmsg("switching active mount to " .. mount:GetName())
-    mount:Use()
+    local _, duration = GetCollectibleCooldownAndDuration(mountId)
+
+    local function use()
+        dmsg("switching active mount to " .. mount:GetName())
+        mount:Use()
+    end
+
+    if duration > 0 then
+        zo_callLater(use, duration)
+    else
+        use()
+    end
 
     if self.next == #self.ids then
         shuffle(self.ids)
