@@ -1,4 +1,3 @@
-local LAM = LibAddonMenu2
 local moduleName = "Mounts"
 local modulePrefix = Carousel.name .. moduleName
 
@@ -36,60 +35,10 @@ local function isMount(collectible)
 end
 
 function Carousel.Mounts:Init()
-    self:InitMenu()
-
     self:LoadMounts(false)
-    if self.Enabled() then
+    if self:Enabled() then
         self:RegisterNext()
     end
-end
-
-function Carousel.Mounts:InitMenu()
-    local panelData = {
-        type = "panel",
-        name = self.displayName,
-        displayName = self.displayName,
-        author = Carousel.author,
-        version = Carousel.version,
-        registerForRefresh = true,
-        registerForDefaults = true,
-    }
-    local optionsData = {
-        [1] = {
-            type = "header",
-            name = self.displayName .. " Settings",
-            width = "full",
-        },
-        [2] = {
-            type = "description",
-            text = "Control how " .. Carousel.displayName .. " cycles mounts.",
-            width = "full",
-        },
-        [3] = {
-            type = "checkbox",
-            name = "Enable",
-            tooltip = "Enable/disable cycling mounts.",
-            width = "full",
-            default = self.optionsDefault.enabled,
-            getFunc = function() return self:Enabled() end,
-            setFunc = function(v) if v then self:Enable() else self:Disable() end end,
-        },
-        [4] = {
-            type = "slider",
-            name = "Cycle rate (minutes)",
-            tooltip = "How quickly to cycle through mounts. Set to 0 to cycle on every dismount.",
-            width = "full",
-            min = 0,
-            max = 24 * 60, -- 24 hours
-            step = 1,
-            default = self.optionsDefault.rate_s / 60,
-            getFunc = function() return self:CycleRate_ms() / (1000 * 60) end,
-            setFunc = function(v) return self:SetCycleRate_min(v) end,
-        },
-    }
-
-    LAM:RegisterAddonPanel(self.name, panelData)
-    LAM:RegisterOptionControls(self.name, optionsData)
 end
 
 -- TODO: recompute if mounts change
@@ -144,7 +93,7 @@ function Carousel.Mounts:Unregister()
 end
 
 function Carousel.Mounts:RegisterNext()
-    if not self.Enabled() then return end
+    if not self:Enabled() then return end
 
     self:Unregister()
     if self:CycleRate_ms() > 0 then
@@ -176,7 +125,7 @@ end
 -- TODO: allow filtering
 -- TODO: allow changing companion's mount
 function Carousel.Mounts:Next()
-    if not self.Enabled() then return end
+    if not self:Enabled() then return end
 
     if IsMounted() then
         self:WaitForDismount()

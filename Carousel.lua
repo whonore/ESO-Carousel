@@ -1,3 +1,5 @@
+local LAM = LibAddonMenu2
+
 Carousel = {
     name = "Carousel",
     displayName = "Carousel",
@@ -12,16 +14,23 @@ local function init()
         Carousel.Mounts.optionsVersion,
         nil,
         Carousel.Mounts.optionsDefault)
+    Carousel.options.pets = ZO_SavedVars:NewAccountWide(
+        "Pets",
+        Carousel.Pets.optionsVersion,
+        nil,
+        Carousel.Pets.optionsDefault)
 
     SLASH_COMMANDS["/carousel"] = Carousel.RunSlash
 
-    Carousel.Mounts:Init(true)
+    Carousel:InitMenu()
+    Carousel.Mounts:Init()
+    Carousel.Pets:Init()
 end
 
 function Carousel.RunSlash(option)
     local function help()
         d(Carousel.name .. " commands:")
-        d("/carousel mounts [toggle||enable||disable||reload]")
+        d("/carousel [mounts||pets] [toggle||enable||disable||reload]")
     end
     local options = {string.match(option, "^(%S*)%s*(.-)$")}
 
@@ -43,9 +52,111 @@ function Carousel.RunSlash(option)
         else
             help()
         end
+    elseif options[1] == "pets" then
+        if options[2] == "toggle" then
+            if Carousel.options.pets.enabled then
+                Carousel.Pets:Disable()
+            else
+                Carousel.Pets:Enable()
+            end
+        elseif options[2] == "enable" then
+            Carousel.Pets:Enable()
+        elseif options[2] == "disable" then
+            Carousel.Pets:Disable()
+        elseif options[2] == "reload" then
+            Carousel.Pets:LoadMounts(true)
+        else
+            help()
+        end
     else
         help()
     end
+end
+
+function Carousel:InitMenu()
+    local panelData = {
+        type = "panel",
+        name = self.displayName,
+        displayName = self.displayName,
+        author = self.author,
+        version = self.version,
+        registerForRefresh = true,
+        registerForDefaults = true,
+    }
+    local optionsData = {
+        -- Mounts
+        [1] = {
+            type = "header",
+            name = Carousel.Mounts.displayName .. " Settings",
+            width = "full",
+        },
+        [2] = {
+            type = "description",
+            text = "Control how " .. self.displayName .. " cycles mounts.",
+            width = "full",
+        },
+        [3] = {
+            type = "checkbox",
+            name = "Enable",
+            tooltip = "Enable/disable cycling mounts.",
+            width = "full",
+            default = Carousel.Mounts.optionsDefault.enabled,
+            getFunc = function() return Carousel.Mounts:Enabled() end,
+            setFunc = function(v)
+                if v then Carousel.Mounts:Enable() else Carousel.Mounts:Disable() end
+            end,
+        },
+        [4] = {
+            type = "slider",
+            name = "Cycle Rate (minutes)",
+            tooltip = "How often to cycle through mounts. Set to 0 to cycle on every dismount.",
+            width = "full",
+            min = 0,
+            max = 24 * 60, -- 24 hours
+            step = 1,
+            default = Carousel.Mounts.optionsDefault.rate_s / 60,
+            getFunc = function() return Carousel.Mounts:CycleRate_ms() / (1000 * 60) end,
+            setFunc = function(v) Carousel.Mounts:SetCycleRate_min(v) end,
+        },
+        -- Pets
+        [5] = {
+            type = "header",
+            name = Carousel.Pets.displayName .. " Settings",
+            width = "full",
+        },
+        [6] = {
+            type = "description",
+            text = "Control how " .. self.displayName .. " cycles pets.",
+            width = "full",
+        },
+        [7] = {
+            type = "checkbox",
+            name = "Enable",
+            tooltip = "Enable/disable cycling pets.",
+            width = "full",
+            default = Carousel.Pets.optionsDefault.enabled,
+            getFunc = function() return Carousel.Pets:Enabled() end,
+            setFunc = function(v)
+                if v then Carousel.Pets:Enable() else Carousel.Pets:Disable() end
+            end,
+        },
+        [8] = {
+            type = "slider",
+            name = "Cycle Rate (minutes)",
+            tooltip = "How often to cycle through pets.",
+            width = "full",
+            min = 1,
+            max = 24 * 60, -- 24 hours
+            step = 1,
+            default = Carousel.Pets.optionsDefault.rate_s / 60,
+            getFunc = function() return Carousel.Pets:CycleRate_ms() / (1000 * 60) end,
+            setFunc = function(v) Carousel.Pets:SetCycleRate_min(v) end,
+        },
+    }
+    local id = self.name .. "LAM"
+
+    LAM:RegisterAddonPanel(id, panelData)
+    LAM:RegisterOptionControls(id, optionsData)
 end
 
 EVENT_MANAGER:RegisterForEvent(

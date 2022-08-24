@@ -10,8 +10,9 @@
 ## AddOnVersion: 2
 ## Version: 0.2.0
 ## IsLibrary: false
-## SavedVariables: Mounts
+## SavedVariables: Mounts Pets
 ## DependsOn: LibAddonMenu-2.0>=34
 
 Carousel.lua
 Mounts.lua
+Pets.lua
