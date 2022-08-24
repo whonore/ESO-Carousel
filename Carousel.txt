@@ -6,7 +6,7 @@
 ## Title: Carousel
 ## Author: Wolf Honore
 ## Description: Randomly cycle mounts and pets.
-## APIVersion: 101034
+## APIVersion: 101035
 ## AddOnVersion: 2
 ## Version: 0.2.0
 ## IsLibrary: false
