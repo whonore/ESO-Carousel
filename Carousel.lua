@@ -4,7 +4,7 @@ Carousel = {
     name = "Carousel",
     displayName = "Carousel",
     author = "Wolf Honore",
-    version = "0.2.0",
+    version = "0.3.0",
     options = {},
 }
 
