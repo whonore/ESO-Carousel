@@ -39,9 +39,10 @@ end
 local function petData(petId)
     local data = ZO_COLLECTIBLE_DATA_MANAGER:GetCollectibleDataById(petId)
     local _, duration = GetCollectibleCooldownAndDuration(petId)
+    local name = string.gsub(data:GetName(), "%^n$", "")
     return {
         id = petId,
-        name = data:GetName(),
+        name = name,
         duration = duration,
         data = data,
     }
