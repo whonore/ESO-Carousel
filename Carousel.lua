@@ -75,6 +75,45 @@ local function mountControls()
     return controls
 end
 
+local function petControls()
+    local pets = {}
+    for pet in Carousel.Pets:Iter() do
+        table.insert(pets, pet)
+    end
+    table.sort(pets, function(x, y) return x.name < y.name end)
+
+    local controls = {
+        [1] = {
+            type = "description",
+            text = "Select pets to include/exclude from the rotation.",
+            width = "full",
+        },
+        [2] = {
+            type = "button",
+            name = "Include All",
+            tooltip = "Include all pets in the rotation.",
+            func = function() Carousel.Pets:IncludeAll() end,
+            width = "half",
+        },
+    }
+    for _, pet in pairs(pets) do
+        local control = {
+            type = "checkbox",
+            name = pet.name,
+            tooltip = "Include/exclude this pet from the rotation.",
+            width = "full",
+            default = true,
+            getFunc = function() return Carousel.Pets:Included(pet) end,
+            setFunc = function(v)
+                if v then Carousel.Pets:Include(pet) else Carousel.Pets:Exclude(pet) end
+            end,
+        }
+        table.insert(controls, control)
+    end
+
+    return controls
+end
+
 function Carousel.RunSlash(option)
     local function help()
         d(Carousel.name .. " commands:")
@@ -206,13 +245,19 @@ function Carousel:InitMenu()
             getFunc = function() return Carousel.Pets:CycleRate_ms() / (1000 * 60) end,
             setFunc = function(v) Carousel.Pets:SetCycleRate_min(v) end,
         },
-        -- Debug
         [10] = {
+            type = "submenu",
+            name = "Filter",
+            tooltip = "Include/exclude pets from the rotation.",
+            controls = petControls(),
+        },
+        -- Debug
+        [11] = {
             type = "header",
             name = "Debug",
             width = "full",
         },
-        [11] = {
+        [12] = {
             type = "checkbox",
             name = "Messages",
             tooltip = "Enable/disable debug messages.",

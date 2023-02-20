@@ -11,6 +11,7 @@ Carousel.Pets = {
     optionsDefault = {
         enabled = true,
         rate_s = 10 * 60, -- 10 minutes
+        excluded = {},
     },
 }
 
@@ -33,6 +34,17 @@ end
 
 local function isPet(collectible)
     return collectible:IsCategoryType(COLLECTIBLE_CATEGORY_TYPE_VANITY_PET)
+end
+
+local function petData(petId)
+    local data = ZO_COLLECTIBLE_DATA_MANAGER:GetCollectibleDataById(petId)
+    local _, duration = GetCollectibleCooldownAndDuration(petId)
+    return {
+        id = petId,
+        name = data:GetName(),
+        duration = duration,
+        data = data,
+    }
 end
 
 function Carousel.Pets:Init()
@@ -88,6 +100,25 @@ function Carousel.Pets:SetCycleRate_min(rate_min)
     self:RegisterNext()
 end
 
+function Carousel.Pets:IncludeAll()
+    dmsg("including all")
+    Carousel.options.pets.excluded = {}
+end
+
+function Carousel.Pets:Include(pet)
+    dmsg("including " .. pet.name)
+    Carousel.options.pets.excluded[pet.id] = nil
+end
+
+function Carousel.Pets:Exclude(pet)
+    dmsg("excluding " .. pet.name)
+    Carousel.options.pets.excluded[pet.id] = true
+end
+
+function Carousel.Pets:Included(pet)
+    return Carousel.options.pets.excluded[pet.id] == nil
+end
+
 function Carousel.Pets:Unregister()
     EVENT_MANAGER:UnregisterForUpdate(self.events.next)
 end
@@ -102,29 +133,48 @@ function Carousel.Pets:RegisterNext()
         function() self:Next() end)
 end
 
--- TODO: allow filtering
 function Carousel.Pets:Next()
     if not self:Enabled() then return end
 
-    local petId = self.ids[self.next]
-    local pet = ZO_COLLECTIBLE_DATA_MANAGER:GetCollectibleDataById(petId)
-    local _, duration = GetCollectibleCooldownAndDuration(petId)
+    local looped = 0
+    local pet
+    repeat
+        pet = petData(self.ids[self.next])
 
-    local function use()
-        dmsg("switching active pet to " .. pet:GetName())
-        pet:Use()
+        if self.next == #self.ids then
+            shuffle(self.ids)
+            self.next = 1
+            looped = looped + 1
+        else
+            self.next = self.next + 1
+        end
+    until self:Included(pet) or looped > 1
+
+    if looped > 1 then
+        dmsg("Warning: all pets excluded")
     end
 
-    if duration > 0 then
-        zo_callLater(use, duration)
+    local function use()
+        dmsg("switching active pet to " .. pet.name)
+        pet.data:Use()
+    end
+
+    if pet.duration > 0 then
+        zo_callLater(use, pet.duration)
     else
         use()
     end
+end
 
-    if self.next == #self.ids then
-        shuffle(self.ids)
-        self.next = 1
-    else
-        self.next = self.next + 1
+function Carousel.Pets:Iter()
+    local i = 0
+    local nids = #self.ids
+    return function()
+        i = i + 1
+        if i <= nids then
+            return petData(self.ids[i])
+        else
+            return nil
+        end
     end
 end
