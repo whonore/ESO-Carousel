@@ -12,6 +12,7 @@ Carousel.Mounts = {
     optionsDefault = {
         enabled = true,
         rate_s = 10 * 60, -- 10 minutes
+        excluded = {},
     },
 }
 
@@ -34,6 +35,17 @@ end
 
 local function isMount(collectible)
     return collectible:IsCategoryType(COLLECTIBLE_CATEGORY_TYPE_MOUNT)
+end
+
+local function mountData(mountId)
+    local data = ZO_COLLECTIBLE_DATA_MANAGER:GetCollectibleDataById(mountId)
+    local _, duration = GetCollectibleCooldownAndDuration(mountId)
+    return {
+        id = mountId,
+        name = data:GetName(),
+        duration = duration,
+        data = data,
+    }
 end
 
 function Carousel.Mounts:Init()
@@ -89,6 +101,25 @@ function Carousel.Mounts:SetCycleRate_min(rate_min)
     self:RegisterNext()
 end
 
+function Carousel.Mounts:IncludeAll()
+    dmsg("including all")
+    Carousel.options.mounts.excluded = {}
+end
+
+function Carousel.Mounts:Include(mount)
+    dmsg("including " .. mount.name)
+    Carousel.options.mounts.excluded[mount.id] = nil
+end
+
+function Carousel.Mounts:Exclude(mount)
+    dmsg("excluding " .. mount.name)
+    Carousel.options.mounts.excluded[mount.id] = true
+end
+
+function Carousel.Mounts:Included(mount)
+    return Carousel.options.mounts.excluded[mount.id] == nil
+end
+
 function Carousel.Mounts:Unregister()
     EVENT_MANAGER:UnregisterForEvent(self.events.wait, EVENT_MOUNTED_STATE_CHANGED)
     EVENT_MANAGER:UnregisterForUpdate(self.events.next)
@@ -124,7 +155,6 @@ function Carousel.Mounts:WaitForDismount()
         end)
 end
 
--- TODO: allow filtering
 -- TODO: allow changing companion's mount
 function Carousel.Mounts:Next()
     if not self:Enabled() then return end
@@ -134,25 +164,45 @@ function Carousel.Mounts:Next()
         return
     end
 
-    local mountId = self.ids[self.next]
-    local mount = ZO_COLLECTIBLE_DATA_MANAGER:GetCollectibleDataById(mountId)
-    local _, duration = GetCollectibleCooldownAndDuration(mountId)
+    local looped = 0
+    local mount
+    repeat
+        mount = mountData(self.ids[self.next])
 
-    local function use()
-        dmsg("switching active mount to " .. mount:GetName())
-        mount:Use()
+        if self.next == #self.ids then
+            shuffle(self.ids)
+            self.next = 1
+            looped = looped + 1
+        else
+            self.next = self.next + 1
+        end
+    until self:Included(mount) or looped > 1
+
+    if looped > 1 then
+        dmsg("Warning: all mounts excluded")
     end
 
-    if duration > 0 then
-        zo_callLater(use, duration)
+    local function use()
+        dmsg("switching active mount to " .. mount.name)
+        mount.data:Use()
+    end
+
+    if mount.duration > 0 then
+        zo_callLater(use, mount.duration)
     else
         use()
     end
+end
 
-    if self.next == #self.ids then
-        shuffle(self.ids)
-        self.next = 1
-    else
-        self.next = self.next + 1
+function Carousel.Mounts:Iter()
+    local i = 0
+    local nids = #self.ids
+    return function()
+        i = i + 1
+        if i <= nids then
+            return mountData(self.ids[i])
+        else
+            return nil
+        end
     end
 end

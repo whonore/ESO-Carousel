@@ -31,9 +31,48 @@ local function init()
 
     SLASH_COMMANDS["/carousel"] = Carousel.RunSlash
 
-    Carousel:InitMenu()
     Carousel.Mounts:Init()
     Carousel.Pets:Init()
+    Carousel:InitMenu()
+end
+
+local function mountControls()
+    local mounts = {}
+    for mount in Carousel.Mounts:Iter() do
+        table.insert(mounts, mount)
+    end
+    table.sort(mounts, function(x, y) return x.name < y.name end)
+
+    local controls = {
+        [1] = {
+            type = "description",
+            text = "Select mounts to include/exclude from the rotation.",
+            width = "full",
+        },
+        [2] = {
+            type = "button",
+            name = "Include All",
+            tooltip = "Include all mounts in the rotation.",
+            func = function() Carousel.Mounts:IncludeAll() end,
+            width = "half",
+        },
+    }
+    for _, mount in pairs(mounts) do
+        local control = {
+            type = "checkbox",
+            name = mount.name,
+            tooltip = "Include/exclude this mount from the rotation.",
+            width = "full",
+            default = true,
+            getFunc = function() return Carousel.Mounts:Included(mount) end,
+            setFunc = function(v)
+                if v then Carousel.Mounts:Include(mount) else Carousel.Mounts:Exclude(mount) end
+            end,
+        }
+        table.insert(controls, control)
+    end
+
+    return controls
 end
 
 function Carousel.RunSlash(option)
@@ -127,18 +166,24 @@ function Carousel:InitMenu()
             getFunc = function() return Carousel.Mounts:CycleRate_ms() / (1000 * 60) end,
             setFunc = function(v) Carousel.Mounts:SetCycleRate_min(v) end,
         },
-        -- Pets
         [5] = {
+            type = "submenu",
+            name = "Filter",
+            tooltip = "Include/exclude mounts from the rotation.",
+            controls = mountControls(),
+        },
+        -- Pets
+        [6] = {
             type = "header",
             name = Carousel.Pets.displayName .. " Settings",
             width = "full",
         },
-        [6] = {
+        [7] = {
             type = "description",
             text = "Control how " .. self.displayName .. " cycles pets.",
             width = "full",
         },
-        [7] = {
+        [8] = {
             type = "checkbox",
             name = "Enable",
             tooltip = "Enable/disable cycling pets.",
@@ -149,7 +194,7 @@ function Carousel:InitMenu()
                 if v then Carousel.Pets:Enable() else Carousel.Pets:Disable() end
             end,
         },
-        [8] = {
+        [9] = {
             type = "slider",
             name = "Cycle Rate (minutes)",
             tooltip = "How often to cycle through pets.",
@@ -162,12 +207,12 @@ function Carousel:InitMenu()
             setFunc = function(v) Carousel.Pets:SetCycleRate_min(v) end,
         },
         -- Debug
-        [9] = {
+        [10] = {
             type = "header",
             name = "Debug",
             width = "full",
         },
-        [10] = {
+        [11] = {
             type = "checkbox",
             name = "Messages",
             tooltip = "Enable/disable debug messages.",
