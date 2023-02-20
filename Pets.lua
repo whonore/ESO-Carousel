@@ -22,7 +22,9 @@ local function shuffle(x)
 end
 
 local function dmsg(msg)
-    d("[" .. modulePrefix .. "] " .. msg)
+    if Carousel.options.global.debug then
+        d("[" .. modulePrefix .. "] " .. msg)
+    end
 end
 
 local function isPetCategory(category)

@@ -10,7 +10,7 @@
 ## AddOnVersion: 3
 ## Version: 0.3.0
 ## IsLibrary: false
-## SavedVariables: Mounts Pets
+## SavedVariables: Global Mounts Pets
 ## DependsOn: LibAddonMenu-2.0>=34
 
 Carousel.lua

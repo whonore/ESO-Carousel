@@ -6,9 +6,18 @@ Carousel = {
     author = "Wolf Honore",
     version = "0.3.0",
     options = {},
+    optionsVersion = 1,
+    optionsDefault = {
+        debug = false,
+    },
 }
 
 local function init()
+    Carousel.options.global = ZO_SavedVars:NewAccountWide(
+        "Global",
+        Carousel.optionsVersion,
+        nil,
+        Carousel.optionsDefault)
     Carousel.options.mounts = ZO_SavedVars:NewAccountWide(
         "Mounts",
         Carousel.Mounts.optionsVersion,
@@ -151,6 +160,21 @@ function Carousel:InitMenu()
             default = Carousel.Pets.optionsDefault.rate_s / 60,
             getFunc = function() return Carousel.Pets:CycleRate_ms() / (1000 * 60) end,
             setFunc = function(v) Carousel.Pets:SetCycleRate_min(v) end,
+        },
+        -- Debug
+        [9] = {
+            type = "header",
+            name = "Debug",
+            width = "full",
+        },
+        [10] = {
+            type = "checkbox",
+            name = "Messages",
+            tooltip = "Enable/disable debug messages.",
+            width = "full",
+            default = self.optionsDefault.debug,
+            getFunc = function() return self.options.global.debug end,
+            setFunc = function(v) self.options.global.debug = v end,
         },
     }
     local id = self.name .. "LAM"
