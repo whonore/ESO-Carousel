@@ -134,7 +134,7 @@ function Carousel.Mounts:RegisterNext()
         EVENT_MANAGER:RegisterForUpdate(
             self.events.next,
             self:CycleRate_ms(),
-            function() self:Next() end)
+            function() self:Next(false) end)
     else
         self:WaitForDismount()
     end
@@ -151,16 +151,16 @@ function Carousel.Mounts:WaitForDismount()
                     self.events.wait,
                     EVENT_MOUNTED_STATE_CHANGED)
                 self:RegisterNext()
-                self:Next()
+                self:Next(true)
             end
         end)
 end
 
 -- TODO: allow changing companion's mount
-function Carousel.Mounts:Next()
+function Carousel.Mounts:Next(ignoreMounted)
     if not self:Enabled() then return end
 
-    if IsMounted() then
+    if not ignoreMounted and IsMounted() then
         self:WaitForDismount()
         return
     end
