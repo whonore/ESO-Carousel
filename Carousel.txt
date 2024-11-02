@@ -6,9 +6,9 @@
 ## Title: Carousel
 ## Author: Wolf Honore
 ## Description: Randomly cycle mounts and pets.
-## APIVersion: 101036
+## APIVersion: 101044
 ## AddOnVersion: 3
-## Version: 0.4.0
+## Version: 0.4.1
 ## IsLibrary: false
 ## SavedVariables: Global Mounts Pets
 ## DependsOn: LibAddonMenu-2.0>=34
