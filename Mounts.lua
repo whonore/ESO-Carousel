@@ -40,7 +40,7 @@ end
 local function mountData(mountId)
     local data = ZO_COLLECTIBLE_DATA_MANAGER:GetCollectibleDataById(mountId)
     local _, duration = GetCollectibleCooldownAndDuration(mountId)
-    local name = string.gsub(data:GetName(), "%^n$", "")
+    local name = string.gsub(data:GetName(), "%^[nF]$", "")
     return {
         id = mountId,
         name = name,
